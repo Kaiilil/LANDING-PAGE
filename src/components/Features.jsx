@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Heart, Moon, Activity, Cpu, Zap, Shield, Fingerprint, Smartphone, Bluetooth, Wifi
 } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'motion/react';
+import { StaggerChildren, fadeInUp, scaleIn } from '../hooks/useScrollAnimation.jsx';
 
 const features = [
   {
@@ -55,35 +57,49 @@ const features = [
 ];
 
 function FeatureCard({ feature, index }) {
-  const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const cardRef = useRef(null);
   const Icon = feature.icon;
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.15 }
-    );
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => observer.disconnect();
-  }, []);
+  // 3D tilt effect on mouse move
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: y * 10, y: -x * 10 }); // Rotate around X and Y axes
+  };
+
+  const handleMouseLeave = () => {
+    setTilt({ x: 0, y: 0 });
+  };
 
   return (
-    <div
+    <motion.div
       ref={cardRef}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="glass"
+      onMouseLeave={() => {
+        setHovered(false);
+        handleMouseLeave();
+      }}
+      onMouseMove={handleMouseMove}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ duration: 0.6, delay: index * 0.1, ease: 'easeOut' }}
+      whileHover={{ scale: 1.02 }}
+      className="glass flex-shrink-0"
       style={{
         borderRadius: '1.5rem',
         padding: '1.75rem',
         position: 'relative',
         overflow: 'hidden',
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(30px)',
-        transition: `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`,
         cursor: 'default',
+        transformStyle: 'preserve-3d',
+        rotateX: tilt.x,
+        rotateY: tilt.y,
+        transition: 'transform 0.3s ease-out',
       }}
     >
       {/* Glow on hover */}
@@ -108,18 +124,18 @@ function FeatureCard({ feature, index }) {
         transition: 'transform 0.4s ease',
         flexShrink: 0,
       }}>
-        <Icon size={26} style={{ color: 'white' }} />
+        <Icon size={26} style={{ color: 'var(--text-white)' }} />
       </div>
 
       {/* Title */}
       <h3 style={{
-        fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'white',
+        fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'var(--text-white)',
         fontSize: '1.125rem', marginBottom: '0.75rem', position: 'relative', zIndex: 1,
       }}>{feature.title}</h3>
 
       {/* Description */}
       <p style={{
-        color: '#94a3b8', fontSize: '0.875rem', lineHeight: 1.7,
+        color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.7,
         marginBottom: '1.25rem', position: 'relative', zIndex: 1,
       }}>{feature.description}</p>
 
@@ -131,42 +147,32 @@ function FeatureCard({ feature, index }) {
             style={{
               fontSize: '0.75rem', padding: '0.25rem 0.75rem', borderRadius: '9999px',
               background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-              color: '#cbd5e1',
+              color: 'var(--text-light)',
             }}
           >{tag}</span>
         ))}
       </div>
 
-      {/* BG deco corner */}
       <div style={{
         position: 'absolute', top: -32, right: -32, width: 96, height: 96, borderRadius: '50%',
         background: `linear-gradient(135deg, ${feature.colorFrom}, ${feature.colorTo})`,
         opacity: hovered ? 0.2 : 0.08, filter: 'blur(20px)',
         transition: 'opacity 0.5s ease', pointerEvents: 'none',
       }} />
-    </div>
+    </motion.div>
   );
 }
 
 export default function Features() {
-  const [headerVisible, setHeaderVisible] = useState(false);
-  const headerRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setHeaderVisible(true); },
-      { threshold: 0.3 }
-    );
-    if (headerRef.current) observer.observe(headerRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const { scrollY } = useScroll();
+  const yBg = useTransform(scrollY, [0, 1000], [0, 200]);
 
   return (
     <section id="features" style={{ padding: '7rem 0', position: 'relative', overflow: 'hidden' }}>
       {/* Ambient glow */}
-      <div style={{
-        position: 'absolute', top: '50%', left: '50%',
-        transform: 'translate(-50%, -50%)',
+      <motion.div style={{
+        position: 'absolute', top: '20%', left: '50%',
+        x: '-50%', y: yBg,
         width: 700, height: 700,
         background: 'rgba(124,58,237,0.05)', borderRadius: '50%', filter: 'blur(80px)',
         pointerEvents: 'none',
@@ -174,13 +180,13 @@ export default function Features() {
 
       <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1.5rem', position: 'relative', zIndex: 1 }}>
         {/* Header */}
-        <div
-          ref={headerRef}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
           style={{
             textAlign: 'center', marginBottom: '4rem',
-            opacity: headerVisible ? 1 : 0,
-            transform: headerVisible ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.8s ease',
           }}
         >
           <div
@@ -192,31 +198,43 @@ export default function Features() {
             }}
           >
             <Activity size={14} style={{ color: '#a78bfa' }} />
-            <span style={{ color: '#cbd5e1', fontSize: '0.875rem' }}>Tính năng nổi bật</span>
+            <span style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>Tính năng nổi bật</span>
           </div>
-          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 'clamp(2rem, 5vw, 3rem)', color: 'white', marginBottom: '1.25rem' }}>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 'clamp(2rem, 5vw, 3rem)', color: 'var(--text-white)', marginBottom: '1.25rem' }}>
             Được thiết kế để{' '}
             <span className="text-gradient">vượt trội</span>
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '1.125rem', maxWidth: '42rem', margin: '0 auto', lineHeight: 1.75 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem', maxWidth: '42rem', margin: '0 auto', lineHeight: 1.75 }}>
             Mỗi tính năng được xây dựng dựa trên nghiên cứu khoa học và công nghệ tiên tiến nhất
             để mang lại trải nghiệm thực sự khác biệt.
           </p>
-        </div>
+        </motion.div>
 
         {/* Feature grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.5rem',
-        }}>
-          {features.map((feature, i) => (
-            <FeatureCard key={i} feature={feature} index={i} />
-          ))}
-        </div>
+        <StaggerChildren delay={0.1}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '1.5rem',
+          }}>
+            {features.map((feature, i) => (
+              <motion.div
+                key={i}
+                variants={fadeInUp}
+              >
+                <FeatureCard feature={feature} index={i} />
+              </motion.div>
+            ))}
+          </div>
+        </StaggerChildren>
 
         {/* Bottom highlight bar */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-50px' }}
+          transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+          whileHover={{ scale: 1.01 }}
           className="glass"
           style={{
             marginTop: '4rem', borderRadius: '1.5rem', padding: '2rem',
@@ -234,14 +252,16 @@ export default function Features() {
               ))}
             </div>
             <div>
-              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, color: 'white' }}>Kết nối đa nền tảng</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.875rem' }}>iOS, Android, Web Dashboard & API</div>
+              <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, color: 'var(--text-white)' }}>Kết nối đa nền tảng</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>iOS, Android, Web Dashboard & API</div>
             </div>
           </div>
-          <button
+          <motion.button
             id="features-connect-cta"
             onClick={() => document.querySelector('#connect')?.scrollIntoView({ behavior: 'smooth' })}
             className="glass"
+            whileHover={{ scale: 1.05, background: 'rgba(124,58,237,0.15)' }}
+            whileTap={{ scale: 0.95 }}
             style={{
               border: '1px solid rgba(124,58,237,0.4)', color: '#c4b5fd', fontWeight: 500,
               fontSize: '0.875rem', padding: '0.75rem 1.5rem', borderRadius: '1rem',
@@ -250,8 +270,8 @@ export default function Features() {
             }}
           >
             Xem tích hợp dữ liệu
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       </div>
     </section>
   );

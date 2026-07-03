@@ -25,3 +25,12 @@ dist-ssr
 
 # Agent data
 .agents
+
+# Environment and config files
+.env
+.env.local
+.env.*.local
+
+# Documentation
+plan.md
+*.md

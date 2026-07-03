@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ChevronDown, Activity, Shield, Cpu } from 'lucide-react';
+import { useScroll, useTransform, motion } from 'motion/react';
+import { SkeletonCircle, SkeletonStyles } from './ui/Skeleton';
+import { ScrollAnimated, fadeInUp, scaleIn } from '../hooks/useScrollAnimation.jsx';
 
 const stats = [
   { value: '7', unit: 'ngày', label: 'Pin liên tục', icon: Activity },
@@ -9,11 +12,23 @@ const stats = [
 
 export default function Hero() {
   const [loaded, setLoaded] = useState(false);
+  const [ringLoaded, setRingLoaded] = useState(false);
   const ringRef = useRef(null);
+
+  const { scrollY } = useScroll();
+  const yContent = useTransform(scrollY, [0, 500], [0, 150]);
+  const opacityContent = useTransform(scrollY, [0, 300], [1, 0]);
+  const yRing = useTransform(scrollY, [0, 500], [0, 50]);
+  const scaleRing = useTransform(scrollY, [0, 500], [1, 0.9]);
+  const yBg = useTransform(scrollY, [0, 500], [0, -100]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 100);
-    return () => clearTimeout(timer);
+    const ringTimer = setTimeout(() => setRingLoaded(true), 300);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(ringTimer);
+    };
   }, []);
 
   // Parallax mouse effect on ring
@@ -31,21 +46,23 @@ export default function Hero() {
   }, []);
 
   return (
-    <section
-      id="hero"
-      style={{
-        position: 'relative',
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        paddingTop: '80px',
-        paddingBottom: '40px',
-      }}
-    >
+    <>
+      <SkeletonStyles />
+      <section
+        id="hero"
+        style={{
+          position: 'relative',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          paddingTop: '80px',
+          paddingBottom: '40px',
+        }}
+      >
       {/* Background gradients */}
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+      <motion.div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', y: yBg }}>
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/15 rounded-full blur-3xl animate-pulse-glow" />
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1.5s' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-600/5 rounded-full blur-3xl" />
@@ -56,20 +73,20 @@ export default function Hero() {
             backgroundSize: '60px 60px',
           }}
         />
-      </div>
+      </motion.div>
 
-      {/* Floating particles */}
+      {/* Floating particles (added parallax) */}
       {[
-        { w: 6, h: 6, bg: 'rgba(124,58,237,0.7)', top: '15%', left: '8%', delay: '0s' },
-        { w: 4, h: 4, bg: 'rgba(6,182,212,0.7)', top: '25%', right: '12%', delay: '1s' },
-        { w: 8, h: 8, bg: 'rgba(79,70,229,0.5)', top: '65%', left: '5%', delay: '2s' },
-        { w: 5, h: 5, bg: 'rgba(236,72,153,0.6)', top: '75%', right: '8%', delay: '0.5s' },
-        { w: 3, h: 3, bg: 'rgba(52,211,153,0.7)', top: '40%', left: '3%', delay: '1.5s' },
+        { w: 6, h: 6, bg: 'rgba(124,58,237,0.7)', top: '15%', left: '8%', delay: '0s', yOffset: useTransform(scrollY, [0, 500], [0, -50]) },
+        { w: 4, h: 4, bg: 'rgba(6,182,212,0.7)', top: '25%', right: '12%', delay: '1s', yOffset: useTransform(scrollY, [0, 500], [0, -80]) },
+        { w: 8, h: 8, bg: 'rgba(79,70,229,0.5)', top: '65%', left: '5%', delay: '2s', yOffset: useTransform(scrollY, [0, 500], [0, -110]) },
+        { w: 5, h: 5, bg: 'rgba(236,72,153,0.6)', top: '75%', right: '8%', delay: '0.5s', yOffset: useTransform(scrollY, [0, 500], [0, -140]) },
+        { w: 3, h: 3, bg: 'rgba(52,211,153,0.7)', top: '40%', left: '3%', delay: '1.5s', yOffset: useTransform(scrollY, [0, 500], [0, -170]) },
       ].map((p, i) => (
-        <div
+        <motion.div
           key={i}
           className="particle"
-          style={{ width: p.w, height: p.h, background: p.bg, top: p.top, left: p.left, right: p.right, animationDelay: p.delay }}
+          style={{ width: p.w, height: p.h, background: p.bg, top: p.top, left: p.left, right: p.right, animationDelay: p.delay, y: p.yOffset }}
         />
       ))}
 
@@ -86,11 +103,12 @@ export default function Hero() {
           className="hero-inner"
         >
           {/* Left — Text content */}
-          <div
+          <motion.div
             style={{
               flex: 1,
               textAlign: 'center',
-              opacity: loaded ? 1 : 0,
+              opacity: loaded ? opacityContent : 0,
+              y: yContent,
               transform: loaded ? 'translateX(0)' : 'translateX(-40px)',
               transition: 'opacity 1s ease, transform 1s ease',
               width: '100%',
@@ -106,20 +124,26 @@ export default function Hero() {
               }}
             >
               <span style={{ width: 8, height: 8, background: '#34d399', borderRadius: '50%', display: 'inline-block', animation: 'pulse-glow 2s ease-in-out infinite' }} />
-              <span style={{ color: '#cbd5e1', fontSize: '0.875rem', fontWeight: 500 }}>Ra mắt Q3 - 2026</span>
+              <span style={{ color: 'var(--text-light)', fontSize: '0.875rem', fontWeight: 500 }}>Ra mắt Q3 - 2026</span>
             </div>
 
             <h1
               style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, lineHeight: 1.1, marginBottom: '1.5rem' }}
               className="text-5xl sm:text-6xl xl:text-7xl"
             >
-              <span style={{ color: 'white', display: 'block' }}>Tương lai</span>
-              <span className="text-gradient" style={{ display: 'block' }}>trên ngón tay</span>
-              <span style={{ color: 'white', display: 'block' }}>của bạn</span>
+              <ScrollAnimated variant={fadeInUp} delay={0.1}>
+                <span style={{ color: 'var(--text-white)', display: 'block' }}>Tương lai</span>
+              </ScrollAnimated>
+              <ScrollAnimated variant={fadeInUp} delay={0.2}>
+                <span className="text-gradient" style={{ display: 'block' }}>trên ngón tay</span>
+              </ScrollAnimated>
+              <ScrollAnimated variant={fadeInUp} delay={0.3}>
+                <span style={{ color: 'var(--text-white)', display: 'block' }}>của bạn</span>
+              </ScrollAnimated>
             </h1>
 
             <p
-              style={{ color: '#94a3b8', fontSize: '1.125rem', lineHeight: 1.75, marginBottom: '2.5rem', fontFamily: 'Inter, sans-serif', maxWidth: '36rem', margin: '0 auto 2.5rem' }}
+              style={{ color: 'var(--text-muted)', fontSize: '1.125rem', lineHeight: 1.75, marginBottom: '2.5rem', fontFamily: 'Inter, sans-serif', maxWidth: '36rem', margin: '0 auto 2.5rem' }}
             >
               AuraRing X là nhẫn thông minh mỏng nhất thế giới với cảm biến sức khỏe AI tích hợp,
               kiểm soát cử chỉ và pin 7 ngày. Đeo vào — cuộc sống thay đổi.
@@ -128,12 +152,14 @@ export default function Hero() {
             <div style={{
               display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'
             }}>
-              <button
+              <motion.button
                 id="hero-cta-preorder"
                 onClick={() => document.querySelector('#newsletter')?.scrollIntoView({ behavior: 'smooth' })}
                 className="btn-shimmer"
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
                 style={{
-                  border: '1px solid rgba(124,58,237,0.5)', color: 'white', fontWeight: 600,
+                  border: '1px solid rgba(124,58,237,0.5)', color: 'var(--text-white)', fontWeight: 600,
                   fontSize: '1rem', padding: '1rem 2rem', borderRadius: '1rem',
                   display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
                   cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif',
@@ -142,23 +168,23 @@ export default function Hero() {
               >
                 Đặt trước miễn phí
                 <ArrowRight size={18} />
-              </button>
-              <button
+              </motion.button>
+              <motion.button
                 id="hero-cta-features"
                 onClick={() => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })}
                 className="glass"
+                whileHover={{ scale: 1.04, borderColor: 'rgba(124,58,237,0.6)' }}
+                whileTap={{ scale: 0.97 }}
                 style={{
-                  border: '1px solid rgba(255,255,255,0.15)', color: 'white', fontWeight: 500,
+                  border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text-white)', fontWeight: 500,
                   fontSize: '1rem', padding: '1rem 2rem', borderRadius: '1rem',
                   display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                   cursor: 'pointer', background: 'rgba(255,255,255,0.04)', fontFamily: 'Space Grotesk, sans-serif',
                   transition: 'border-color 0.3s',
                 }}
-                onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(124,58,237,0.6)'}
-                onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
               >
                 Khám phá tính năng
-              </button>
+              </motion.button>
             </div>
 
             {/* Hero stats */}
@@ -175,31 +201,36 @@ export default function Hero() {
                       <Icon size={18} style={{ color: '#a78bfa' }} />
                     </div>
                     <div>
-                      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'white', fontSize: '1.25rem', lineHeight: 1.2 }}>
+                      <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, color: 'var(--text-white)', fontSize: '1.25rem', lineHeight: 1.2 }}>
                         {stat.value}<span style={{ color: '#a78bfa', fontSize: '0.875rem', marginLeft: 2 }}>{stat.unit}</span>
                       </div>
-                      <div style={{ color: '#64748b', fontSize: '0.75rem' }}>{stat.label}</div>
+                      <div style={{ color: 'var(--text-dark)', fontSize: '0.75rem' }}>{stat.label}</div>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </motion.div>
 
           {/* Right — Ring visual */}
-          <div
+          <motion.div
             style={{
               flex: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              opacity: loaded ? 1 : 0,
+              opacity: loaded ? opacityContent : 0,
+              y: yRing,
+              scale: scaleRing,
               transform: loaded ? 'translateX(0)' : 'translateX(40px)',
               transition: 'opacity 1s ease 0.3s, transform 1s ease 0.3s',
               width: '100%',
             }}
           >
-            <div
-              style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 340, height: 340, flexShrink: 0 }}
-            >
+            {!ringLoaded ? (
+              <SkeletonCircle size={340} style={{ borderRadius: '50%' }} />
+            ) : (
+              <div
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 340, height: 340, flexShrink: 0 }}
+              >
               {/* Outer orbital rings */}
               <div className="animate-spin-slow" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(124,58,237,0.2)' }} />
               <div className="animate-spin-slow" style={{ position: 'absolute', inset: 24, borderRadius: '50%', border: '1px solid rgba(79,70,229,0.15)', animationDirection: 'reverse', animationDuration: '15s' }} />
@@ -222,7 +253,7 @@ export default function Hero() {
                   <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)', zIndex: 1 }} />
                   <div style={{ position: 'absolute', inset: '30%', top: '35%', left: '35%', borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.8) 0%, rgba(79,70,229,0.4) 50%, transparent 100%)', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ textAlign: 'center', zIndex: 3 }}>
-                      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, color: 'white', fontSize: 22 }}>72</div>
+                      <div style={{ fontFamily: 'Space Grotesk', fontWeight: 700, color: 'var(--text-white)', fontSize: 22 }}>72</div>
                       <div style={{ color: 'rgba(167,139,250,0.9)', fontSize: 10, letterSpacing: 1 }}>BPM</div>
                     </div>
                   </div>
@@ -235,24 +266,25 @@ export default function Hero() {
                 style={{ position: 'absolute', top: -8, right: -8, padding: '0.5rem 0.75rem', borderRadius: '0.75rem', border: '1px solid rgba(52,211,153,0.3)', animationDelay: '0.5s', animationFillMode: 'both', whiteSpace: 'nowrap' }}
               >
                 <div style={{ color: '#34d399', fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif' }}>SpO₂ 98%</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Oxy máu</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Oxy máu</div>
               </div>
               <div
                 className="glass animate-fade-up"
                 style={{ position: 'absolute', bottom: -8, left: -8, padding: '0.5rem 0.75rem', borderRadius: '0.75rem', border: '1px solid rgba(6,182,212,0.3)', animationDelay: '0.8s', animationFillMode: 'both', whiteSpace: 'nowrap' }}
               >
                 <div style={{ color: '#22d3ee', fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif' }}>HRV 68ms</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Hồi phục TT</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Hồi phục TT</div>
               </div>
               <div
                 className="glass animate-fade-up"
                 style={{ position: 'absolute', top: '50%', right: -48, padding: '0.5rem 0.75rem', borderRadius: '0.75rem', border: '1px solid rgba(167,139,250,0.3)', animationDelay: '1.1s', animationFillMode: 'both', transform: 'translateY(-50%)', whiteSpace: 'nowrap' }}
               >
                 <div style={{ color: '#a78bfa', fontSize: '0.75rem', fontWeight: 600, fontFamily: 'Space Grotesk, sans-serif' }}>7.2h</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Giấc ngủ</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Giấc ngủ</div>
               </div>
             </div>
-          </div>
+            )}
+          </motion.div>
         </div>
       </div>
 
@@ -293,5 +325,6 @@ export default function Hero() {
         }
       `}</style>
     </section>
+    </>
   );
 }

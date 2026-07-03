@@ -1,3 +1,4 @@
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
@@ -5,10 +6,13 @@ import Specs from './components/Specs';
 import DataConnect from './components/DataConnect';
 import Newsletter from './components/Newsletter';
 import Footer from './components/Footer';
+import { ThemeProvider } from './context/ThemeContext';
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-[#0a0514] relative">
+    <ThemeProvider>
+      <ToastProvider>
+        <div className="min-h-screen theme-bg relative transition-colors duration-500">
       {/* Global decorative bg — static so it doesn't repaint often */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
@@ -29,6 +33,8 @@ export default function App() {
         </main>
         <Footer />
       </div>
-    </div>
+        </div>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

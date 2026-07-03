@@ -1,4 +1,6 @@
 import { Zap } from 'lucide-react';
+import { motion } from 'motion/react';
+import { fadeInUp } from '../hooks/useScrollAnimation.jsx';
 
 // Inline SVG brand icons since lucide-react v4+ removed them
 const TwitterIcon = () => (
@@ -51,7 +53,13 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         {/* Top: Brand + Links */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-10 mb-14">
+        <motion.div 
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+          variants={fadeInUp}
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-10 mb-14"
+        >
           {/* Brand */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
@@ -63,19 +71,21 @@ export default function Footer() {
                 <span className="text-white">Ring X</span>
               </span>
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed mb-5 max-w-[200px]">
+            <p className="text-slate-400 text-sm leading-relaxed mb-5 max-w-[200px]">
               Nhẫn thông minh thế hệ tiếp theo. Thiết kế tại Việt Nam.
             </p>
             <div className="flex gap-3">
               {socials.map(({ Icon, label, href }) => (
-                <a
+                <motion.a
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="w-9 h-9 glass rounded-xl border border-white/10 flex items-center justify-center text-slate-500 hover:text-violet-400 hover:border-violet-500/40 transition-all duration-300 hover:scale-110"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-9 h-9 glass rounded-xl border border-white/10 flex items-center justify-center text-slate-500 hover:text-violet-400 hover:border-violet-500/40 transition-all duration-300"
                 >
                   <Icon />
-                </a>
+                </motion.a>
               ))}
             </div>
           </div>
@@ -87,36 +97,44 @@ export default function Footer() {
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link}>
-                    <a
+                    <motion.a
                       href="#"
-                      className="text-slate-500 hover:text-slate-300 text-sm transition-colors duration-200"
+                      whileHover={{ x: 5 }}
+                      className="text-slate-400 hover:text-slate-200 text-sm transition-colors duration-200"
                     >
                       {link}
-                    </a>
+                    </motion.a>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-slate-600 text-sm">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+        >
+          <p className="text-slate-400 text-sm">
             © {year} AuraRing Technology Ltd. Mọi quyền được bảo lưu.
           </p>
           <div className="flex items-center gap-6">
             {['Chính sách bảo mật', 'Điều khoản sử dụng', 'Cookie'].map((link) => (
-              <a
+              <motion.a
                 key={link}
                 href="#"
-                className="text-slate-600 hover:text-slate-400 text-xs transition-colors"
+                whileHover={{ y: -1 }}
+                className="text-slate-400 hover:text-slate-200 text-xs transition-colors"
               >
                 {link}
-              </a>
+              </motion.a>
             ))}
           </div>
-        </div>
+        </motion.div>
       </div>
     </footer>
   );

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Zap } from 'lucide-react';
+import { Menu, X, Zap, Sun, Moon } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useTheme } from '../context/ThemeContext';
 
 const navLinks = [
   { label: 'Tính năng', href: '#features' },
@@ -11,6 +13,7 @@ const navLinks = [
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -44,57 +47,93 @@ export default function Navbar() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <button
+            <motion.button
               key={link.label}
               id={`nav-${link.label.toLowerCase()}`}
               onClick={() => handleNav(link.href)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className="text-slate-400 hover:text-white text-sm font-medium transition-colors duration-200 relative group"
             >
               {link.label}
-              <span className="absolute -bottom-1 left-0 w-0 h-px bg-gradient-to-r from-violet-500 to-cyan-400 group-hover:w-full transition-all duration-300" />
-            </button>
+              <motion.span 
+                className="absolute -bottom-1 left-0 w-0 h-px bg-gradient-to-r from-violet-500 to-cyan-400"
+                initial={{ width: 0 }}
+                whileHover={{ width: '100%' }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.button>
           ))}
         </nav>
 
-        {/* CTA Button */}
-        <div className="hidden md:block">
-          <button
+        {/* Desktop Controls */}
+        <div className="hidden md:flex items-center gap-4">
+          <motion.button
+            onClick={toggleTheme}
+            whileHover={{ scale: 1.1, rotate: 15 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-2.5 rounded-full glass border border-white/10 text-slate-300 hover:text-white hover:border-violet-500/40 transition-all duration-300 theme-btn"
+            aria-label="Toggle Dark Mode"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </motion.button>
+          <motion.button
             id="nav-cta-preorder"
             onClick={() => handleNav('#newsletter')}
-            className="btn-shimmer text-white font-600 text-sm px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 font-['Space_Grotesk']"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-shimmer text-white font-600 text-sm px-6 py-2.5 rounded-full transition-all duration-300 font-['Space_Grotesk']"
           >
             Đặt trước ngay
-          </button>
+          </motion.button>
         </div>
 
         {/* Mobile Hamburger */}
-        <button
+        <motion.button
           id="mobile-menu-toggle"
           className="md:hidden text-slate-300 hover:text-white transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
+          whileTap={{ scale: 0.9 }}
         >
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        </motion.button>
       </div>
 
       {/* Mobile Menu */}
       {mobileOpen && (
         <div className="md:hidden glass-dark border-t border-white/5 mt-3 mx-4 rounded-2xl p-5 flex flex-col gap-4 animate-fade-up">
           {navLinks.map((link) => (
-            <button
+            <motion.button
               key={link.label}
               onClick={() => handleNav(link.href)}
+              whileHover={{ x: 5 }}
+              whileTap={{ scale: 0.95 }}
               className="text-slate-300 hover:text-white text-left text-base font-medium py-2 border-b border-white/5 last:border-0 transition-colors"
             >
               {link.label}
-            </button>
+            </motion.button>
           ))}
-          <button
-            onClick={() => handleNav('#newsletter')}
-            className="btn-shimmer text-white font-600 text-sm py-3 rounded-xl mt-2"
-          >
-            Đặt trước ngay
-          </button>
+          <div className="flex gap-3 mt-2">
+            <motion.button
+              onClick={() => {
+                toggleTheme();
+                setMobileOpen(false);
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-1 py-3 glass rounded-xl flex items-center justify-center gap-2 text-slate-300 hover:text-white transition-colors theme-btn"
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </motion.button>
+            <motion.button
+              onClick={() => handleNav('#newsletter')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex-[2] btn-shimmer text-white font-600 text-sm py-3 rounded-xl"
+            >
+              Đặt trước ngay
+            </motion.button>
+          </div>
         </div>
       )}
     </header>

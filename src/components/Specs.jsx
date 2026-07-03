@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Cpu, Battery, Droplets, Weight, Ruler, Thermometer, Clock, Zap } from 'lucide-react';
+import { motion, useScroll, useTransform, useMotionValue, useSpring, useInView, useMotionValueEvent } from 'motion/react';
+import { StaggerChildren, fadeInUp } from '../hooks/useScrollAnimation.jsx';
 
 const tabs = ['Kích thước & Vật liệu', 'Cảm biến', 'Kết nối', 'Hiệu năng'];
 
@@ -49,6 +51,37 @@ const sizeGuide = [
   { size: 13, mm: 22.2, label: 'XXL' },
 ];
 
+// Counter animation hook
+function useCounter(value) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (isInView) {
+      let start = 0;
+      const duration = 1200;
+      const startTime = performance.now();
+
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const current = start + (value - start) * easeOut;
+        setDisplayValue(current);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+  }, [isInView, value]);
+
+  return { ref, displayValue };
+}
+
 const performanceMetrics = [
   { label: 'Độ chính xác nhịp tim', value: 99.2, unit: '%', from: '#ec4899', to: '#f43f5e' },
   { label: 'Độ chính xác SpO₂', value: 98.7, unit: '%', from: '#06b6d4', to: '#6366f1' },
@@ -60,16 +93,10 @@ export default function Specs() {
   const [activeTab, setActiveTab] = useState(tabs[0]);
   const [selectedSize, setSelectedSize] = useState(null);
   const [metricsVisible, setMetricsVisible] = useState(false);
-  const metricsRef = useRef(null);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setMetricsVisible(true); },
-      { threshold: 0.3 }
-    );
-    if (metricsRef.current) observer.observe(metricsRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const { scrollY } = useScroll();
+  const yBg1 = useTransform(scrollY, [500, 1500], [0, -150]);
+  const yBg2 = useTransform(scrollY, [500, 1500], [0, 150]);
 
   const currentSpecs = specData[activeTab];
 
@@ -77,35 +104,37 @@ export default function Specs() {
     <section id="specs" style={{ padding: '7rem 0', position: 'relative', overflow: 'hidden' }}>
       {/* BG */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-        <div style={{ position: 'absolute', top: 0, right: 0, width: 500, height: 500, background: 'rgba(79,70,229,0.08)', borderRadius: '50%', filter: 'blur(80px)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, width: 400, height: 400, background: 'rgba(6,182,212,0.08)', borderRadius: '50%', filter: 'blur(80px)' }} />
+        <motion.div style={{ position: 'absolute', top: 0, right: 0, width: 500, height: 500, background: 'rgba(79,70,229,0.08)', borderRadius: '50%', filter: 'blur(80px)', y: yBg1 }} />
+        <motion.div style={{ position: 'absolute', bottom: 0, left: 0, width: 400, height: 400, background: 'rgba(6,182,212,0.08)', borderRadius: '50%', filter: 'blur(80px)', y: yBg2 }} />
       </div>
 
       <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1.5rem', position: 'relative', zIndex: 1 }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
           <div
             className="glass"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', borderRadius: '9999px', marginBottom: '1.25rem', border: '1px solid rgba(6,182,212,0.3)' }}
           >
             <Cpu size={14} style={{ color: '#22d3ee' }} />
-            <span style={{ color: '#cbd5e1', fontSize: '0.875rem' }}>Thông số kỹ thuật</span>
+            <span style={{ color: 'var(--text-light)', fontSize: '0.875rem' }}>Thông số kỹ thuật</span>
           </div>
-          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 'clamp(2rem, 5vw, 3rem)', color: 'white', marginBottom: '1.25rem' }}>
+          <h2 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: 'clamp(2rem, 5vw, 3rem)', color: 'var(--text-white)', marginBottom: '1.25rem' }}>
             Kỹ thuật <span className="text-gradient">đỉnh cao</span>
           </h2>
-          <p style={{ color: '#94a3b8', fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto', lineHeight: 1.75 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem', maxWidth: '36rem', margin: '0 auto', lineHeight: 1.75 }}>
             Từng chi tiết được tinh chỉnh để mang lại hiệu suất tốt nhất trong một chiếc nhẫn mỏng nhất thế giới.
           </p>
-        </div>
+        </motion.div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', overflowX: 'auto', gap: '0.5rem', marginBottom: '2.5rem', paddingBottom: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }} style={{ display: 'flex', overflowX: 'auto', gap: '0.5rem', marginBottom: '2.5rem', paddingBottom: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
           {tabs.map((tab) => (
-            <button
+            <motion.button
               key={tab}
               id={`spec-tab-${tab.replace(/\s/g, '-').toLowerCase()}`}
               onClick={() => setActiveTab(tab)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               className={activeTab === tab ? 'tab-active' : 'glass'}
               style={{
                 whiteSpace: 'nowrap', padding: '0.625rem 1.25rem', borderRadius: '0.75rem',
@@ -117,21 +146,26 @@ export default function Specs() {
               }}
             >
               {tab}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
 
         {/* Specs Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '3.5rem' }}>
           {currentSpecs.map((spec, i) => {
             const Icon = spec.icon;
             return (
-              <div
+              <motion.div
                 key={`${activeTab}-${i}`}
-                className="glass animate-fade-up"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                whileHover={{ scale: 1.02, background: 'rgba(255,255,255,0.08)' }}
+                className="glass"
                 style={{
                   borderRadius: '1rem', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem',
-                  transition: 'background 0.3s', animationDelay: `${i * 0.05}s`, animationFillMode: 'both',
+                  transition: 'background 0.3s',
                 }}
               >
                 <div
@@ -141,49 +175,58 @@ export default function Specs() {
                   <Icon size={20} style={{ color: spec.color }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: '#64748b', fontSize: '0.75rem', marginBottom: '0.25rem' }}>{spec.label}</div>
+                  <div style={{ color: 'var(--text-light)', fontSize: '0.75rem', marginBottom: '0.25rem', fontWeight: 500 }}>{spec.label}</div>
                   <div style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, fontSize: '0.95rem', color: spec.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{spec.value}</div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
         {/* Performance Bars */}
-        <div ref={metricsRef} className="glass" style={{ borderRadius: '1.5rem', padding: '2rem', marginBottom: '2.5rem' }}>
-          <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: 'white', marginBottom: '1.75rem' }}>Độ chính xác cảm biến</h3>
+        <motion.div onViewportEnter={() => setMetricsVisible(true)} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-50px' }} transition={{ duration: 0.7 }} whileHover={{ scale: 1.01 }} className="glass" style={{ borderRadius: '1.5rem', padding: '2rem', marginBottom: '2.5rem' }}>
+          <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-white)', marginBottom: '1.75rem' }}>Độ chính xác cảm biến</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem 2.5rem' }}>
-            {performanceMetrics.map((metric, i) => (
+            {performanceMetrics.map((metric, i) => {
+              const { displayValue } = useCounter(metric.value);
+              return (
               <div key={i}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{metric.label}</span>
-                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, color: 'white', fontSize: '0.875rem' }}>{metric.value}{metric.unit}</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{metric.label}</span>
+                  <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 600, color: 'var(--text-white)', fontSize: '0.875rem' }}>
+                    {metricsVisible ? displayValue.toFixed(1) : '0'}{metric.unit}
+                  </span>
                 </div>
                 <div style={{ height: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' }}>
-                  <div
+                  <motion.div
                     className="progress-bar"
+                    initial={{ width: '0%' }}
+                    animate={{ width: metricsVisible ? `${metric.value}%` : '0%' }}
+                    transition={{ duration: 1.2, delay: i * 0.1, ease: 'easeOut' }}
                     style={{
-                      width: metricsVisible ? `${metric.value}%` : '0%',
                       height: '100%',
                       background: `linear-gradient(90deg, ${metric.from}, ${metric.to})`,
                     }}
                   />
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
-        </div>
+        </motion.div>
 
         {/* Size Guide */}
-        <div className="glass" style={{ borderRadius: '1.5rem', padding: '2rem' }}>
-          <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: 'white', marginBottom: '0.5rem' }}>Hướng dẫn chọn cỡ nhẫn</h3>
-          <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Đo chu vi ngón tay và chọn cỡ phù hợp (mm = đường kính trong)</p>
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-50px' }} transition={{ duration: 0.7 }} className="glass" style={{ borderRadius: '1.5rem', padding: '2rem' }}>
+          <h3 style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-white)', marginBottom: '0.5rem' }}>Hướng dẫn chọn cỡ nhẫn</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>Đo chu vi ngón tay và chọn cỡ phù hợp (mm = đường kính trong)</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: '0.5rem' }}>
             {sizeGuide.map((item) => (
-              <button
+              <motion.button
                 key={item.size}
                 id={`size-select-${item.size}`}
                 onClick={() => setSelectedSize(item.size === selectedSize ? null : item.size)}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center',
                   padding: '0.75rem 0.25rem', borderRadius: '1rem', cursor: 'pointer',
@@ -197,7 +240,7 @@ export default function Specs() {
                 <span style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, fontSize: '1.125rem', lineHeight: 1.2 }}>{item.size}</span>
                 <span style={{ fontSize: '0.75rem', opacity: 0.75, marginTop: 2 }}>{item.mm}</span>
                 <span style={{ fontSize: '0.75rem', fontWeight: 600, marginTop: 4, color: selectedSize === item.size ? '#c4b5fd' : '#64748b' }}>{item.label}</span>
-              </button>
+              </motion.button>
             ))}
           </div>
           {selectedSize && (
@@ -209,15 +252,15 @@ export default function Specs() {
                 <Ruler size={18} style={{ color: '#a78bfa' }} />
               </div>
               <div>
-                <span style={{ color: 'white', fontWeight: 600 }}>Cỡ {selectedSize}</span>
-                <span style={{ color: '#94a3b8', fontSize: '0.875rem', marginLeft: 8 }}>
+                <span style={{ color: 'var(--text-white)', fontWeight: 600 }}>Cỡ {selectedSize}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginLeft: 8 }}>
                   = {sizeGuide.find(s => s.size === selectedSize)?.mm} mm — {sizeGuide.find(s => s.size === selectedSize)?.label} size
                 </span>
-                <p style={{ color: '#64748b', fontSize: '0.75rem', marginTop: 4 }}>Có dịch vụ đổi cỡ miễn phí trong 30 ngày đầu.</p>
+                <p style={{ color: 'var(--text-dark)', fontSize: '0.75rem', marginTop: 4 }}>Có dịch vụ đổi cỡ miễn phí trong 30 ngày đầu.</p>
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
