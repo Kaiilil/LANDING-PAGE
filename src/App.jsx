@@ -1,12 +1,24 @@
+import { lazy, Suspense } from 'react';
 import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import Features from './components/Features';
-import Specs from './components/Specs';
-import DataConnect from './components/DataConnect';
-import Newsletter from './components/Newsletter';
 import Footer from './components/Footer';
 import { ThemeProvider } from './context/ThemeContext';
+
+// Lazy load heavy components
+const Features = lazy(() => import('./components/Features'));
+const Specs = lazy(() => import('./components/Specs'));
+const DataConnect = lazy(() => import('./components/DataConnect'));
+const Newsletter = lazy(() => import('./components/Newsletter'));
+
+// Loading fallback component
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-12 h-12 border-4 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -26,10 +38,18 @@ export default function App() {
         <Navbar />
         <main>
           <Hero />
-          <Features />
-          <Specs />
-          <DataConnect />
-          <Newsletter />
+          <Suspense fallback={<LoadingFallback />}>
+            <Features />
+          </Suspense>
+          <Suspense fallback={<LoadingFallback />}>
+            <Specs />
+          </Suspense>
+          <Suspense fallback={<LoadingFallback />}>
+            <DataConnect />
+          </Suspense>
+          <Suspense fallback={<LoadingFallback />}>
+            <Newsletter />
+          </Suspense>
         </main>
         <Footer />
       </div>
