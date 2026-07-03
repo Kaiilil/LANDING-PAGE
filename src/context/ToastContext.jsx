@@ -26,6 +26,7 @@ export function ToastProvider({ children }) {
 
       {/* Fixed toast portal — top-right, below navbar */}
       <div
+        role="status"
         aria-live="polite"
         aria-label="Thông báo hệ thống"
         style={{
