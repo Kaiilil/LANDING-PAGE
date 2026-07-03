@@ -60,29 +60,40 @@ function FeatureCard({ feature, index }) {
   const [hovered, setHovered] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const cardRef = useRef(null);
+  const rectRef = useRef(null);
   const Icon = feature.icon;
 
   // 3D tilt effect on mouse move
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
+    
+    // Cache rect to avoid layout thrashing
+    if (!rectRef.current) {
+      rectRef.current = cardRef.current.getBoundingClientRect();
+    }
+    const rect = rectRef.current;
+    
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     setTilt({ x: y * 10, y: -x * 10 }); // Rotate around X and Y axes
   };
 
+  const handleMouseEnter = () => {
+    rectRef.current = null; // Reset rect cache on enter
+    setHovered(true);
+  };
+
   const handleMouseLeave = () => {
+    rectRef.current = null; // Reset rect cache on leave
     setTilt({ x: 0, y: 0 });
+    setHovered(false);
   };
 
   return (
     <motion.div
       ref={cardRef}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        handleMouseLeave();
-      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}

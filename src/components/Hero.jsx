@@ -33,16 +33,31 @@ export default function Hero() {
 
   // Parallax mouse effect on ring
   useEffect(() => {
+    let animationFrameId;
     const handleMouseMove = (e) => {
       if (!ringRef.current) return;
       const { clientX, clientY } = e;
       const { innerWidth, innerHeight } = window;
       const x = (clientX / innerWidth - 0.5) * 12;
       const y = (clientY / innerHeight - 0.5) * 8;
-      ringRef.current.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
+      
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      
+      animationFrameId = requestAnimationFrame(() => {
+        if (ringRef.current) {
+          ringRef.current.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
+        }
+      });
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, []);
 
   return (
