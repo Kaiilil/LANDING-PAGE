@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, ChevronDown, Activity, Shield, Cpu } from 'lucide-react';
 import { useScroll, useTransform, motion } from 'motion/react';
-import { SkeletonCircle, SkeletonStyles } from './ui/Skeleton';
-import { ScrollAnimated, fadeInUp, scaleIn } from '../hooks/useScrollAnimation.jsx';
 
 const stats = [
   { value: '7', unit: 'ngày', label: 'Pin liên tục', icon: Activity },
@@ -12,7 +10,6 @@ const stats = [
 
 export default function Hero() {
   const [loaded, setLoaded] = useState(false);
-  const [ringLoaded, setRingLoaded] = useState(false);
   const ringRef = useRef(null);
 
   const { scrollY } = useScroll();
@@ -24,58 +21,37 @@ export default function Hero() {
 
   useEffect(() => {
     const timer = setTimeout(() => setLoaded(true), 100);
-    const ringTimer = setTimeout(() => setRingLoaded(true), 300);
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(ringTimer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   // Parallax mouse effect on ring
   useEffect(() => {
-    let animationFrameId;
     const handleMouseMove = (e) => {
       if (!ringRef.current) return;
       const { clientX, clientY } = e;
       const { innerWidth, innerHeight } = window;
       const x = (clientX / innerWidth - 0.5) * 12;
       const y = (clientY / innerHeight - 0.5) * 8;
-      
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      
-      animationFrameId = requestAnimationFrame(() => {
-        if (ringRef.current) {
-          ringRef.current.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
-        }
-      });
+      ringRef.current.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   return (
-    <>
-      <SkeletonStyles />
-      <section
-        id="hero"
-        style={{
-          position: 'relative',
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          paddingTop: '80px',
-          paddingBottom: '40px',
-        }}
-      >
+    <section
+      id="hero"
+      style={{
+        position: 'relative',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        paddingTop: '80px',
+        paddingBottom: '40px',
+      }}
+    >
       {/* Background gradients */}
       <motion.div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', y: yBg }}>
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/15 rounded-full blur-3xl animate-pulse-glow" />
@@ -146,15 +122,9 @@ export default function Hero() {
               style={{ fontFamily: 'Space Grotesk, sans-serif', fontWeight: 700, lineHeight: 1.1, marginBottom: '1.5rem' }}
               className="text-5xl sm:text-6xl xl:text-7xl"
             >
-              <ScrollAnimated variant={fadeInUp} delay={0.1}>
-                <span style={{ color: 'var(--text-white)', display: 'block' }}>Tương lai</span>
-              </ScrollAnimated>
-              <ScrollAnimated variant={fadeInUp} delay={0.2}>
-                <span className="text-gradient" style={{ display: 'block' }}>trên ngón tay</span>
-              </ScrollAnimated>
-              <ScrollAnimated variant={fadeInUp} delay={0.3}>
-                <span style={{ color: 'var(--text-white)', display: 'block' }}>của bạn</span>
-              </ScrollAnimated>
+              <span style={{ color: 'var(--text-white)', display: 'block' }}>Tương lai</span>
+              <span className="text-gradient" style={{ display: 'block' }}>trên ngón tay</span>
+              <span style={{ color: 'var(--text-white)', display: 'block' }}>của bạn</span>
             </h1>
 
             <p
@@ -167,12 +137,10 @@ export default function Hero() {
             <div style={{
               display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap'
             }}>
-              <motion.button
+              <button
                 id="hero-cta-preorder"
                 onClick={() => document.querySelector('#newsletter')?.scrollIntoView({ behavior: 'smooth' })}
                 className="btn-shimmer"
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
                 style={{
                   border: '1px solid rgba(124,58,237,0.5)', color: 'var(--text-white)', fontWeight: 600,
                   fontSize: '1rem', padding: '1rem 2rem', borderRadius: '1rem',
@@ -183,13 +151,11 @@ export default function Hero() {
               >
                 Đặt trước miễn phí
                 <ArrowRight size={18} />
-              </motion.button>
-              <motion.button
+              </button>
+              <button
                 id="hero-cta-features"
                 onClick={() => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })}
                 className="glass"
-                whileHover={{ scale: 1.04, borderColor: 'rgba(124,58,237,0.6)' }}
-                whileTap={{ scale: 0.97 }}
                 style={{
                   border: '1px solid rgba(255,255,255,0.15)', color: 'var(--text-white)', fontWeight: 500,
                   fontSize: '1rem', padding: '1rem 2rem', borderRadius: '1rem',
@@ -197,9 +163,11 @@ export default function Hero() {
                   cursor: 'pointer', background: 'rgba(255,255,255,0.04)', fontFamily: 'Space Grotesk, sans-serif',
                   transition: 'border-color 0.3s',
                 }}
+                onMouseOver={e => e.currentTarget.style.borderColor = 'rgba(124,58,237,0.6)'}
+                onMouseOut={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
               >
                 Khám phá tính năng
-              </motion.button>
+              </button>
             </div>
 
             {/* Hero stats */}
@@ -240,12 +208,9 @@ export default function Hero() {
               width: '100%',
             }}
           >
-            {!ringLoaded ? (
-              <SkeletonCircle size={340} style={{ borderRadius: '50%' }} />
-            ) : (
-              <div
-                style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 340, height: 340, flexShrink: 0 }}
-              >
+            <div
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 340, height: 340, flexShrink: 0 }}
+            >
               {/* Outer orbital rings */}
               <div className="animate-spin-slow" style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '1px solid rgba(124,58,237,0.2)' }} />
               <div className="animate-spin-slow" style={{ position: 'absolute', inset: 24, borderRadius: '50%', border: '1px solid rgba(79,70,229,0.15)', animationDirection: 'reverse', animationDuration: '15s' }} />
@@ -298,7 +263,6 @@ export default function Hero() {
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Giấc ngủ</div>
               </div>
             </div>
-            )}
           </motion.div>
         </div>
       </div>
@@ -340,6 +304,5 @@ export default function Hero() {
         }
       `}</style>
     </section>
-    </>
   );
 }
